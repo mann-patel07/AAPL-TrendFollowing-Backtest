@@ -15,7 +15,7 @@ This project tests a simple trend-following strategy against AAPL stock data fro
 
 Buy-and-hold outperformed the strategy on both raw and risk-adjusted returns. The strategy made 18 round-trip trades over the period, spending about 65% of the time in the market. Transaction costs accounted for roughly 1.8% of cumulative return — verified directly in the notebook by comparing results with and without costs — so the underperformance is mainly about missed time in the market during recoveries, not trading fees.
 
-Numbers reflect a run against live yfinance data on [FILL IN THE DATE YOU ACTUALLY RAN IT]. Re-running later may produce slightly different results if the underlying price data or T-bill rate series is revised.
+Numbers reflect a run against live yfinance data on 09/02/2026. Re-running later may produce slightly different results if the underlying price data or T-bill rate series is revised.
 
 ## What I did
 

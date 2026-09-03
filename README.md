@@ -1,49 +1,50 @@
-# Moving Average Crossover Backtest
+# Moving Average Crossover Backtest: AAPL
 
-Python backtest comparing a moving average crossover strategy to buy and hold, with risk adjusted performance metrics.
+Python backtest comparing a 20/50-day moving average crossover strategy to buy-and-hold on AAPL, with realistic transaction costs, actual historical risk-free rates, and risk-adjusted performance metrics.
 
 ## What this is
 
-This project backtests a simple moving average crossover trading strategy against AAPL stock data from 2019 to 2026, and compares it to a basic buy and hold approach using both raw returns and risk adjusted metrics (CAGR, max drawdown, Sharpe ratio).
-
-The strategy generates a buy signal when a short-term moving average crosses above a long-term moving average, and a sell signal when it crosses below, one of the most common introductory strategies in quantitative finance.
-
-## What I did
-
-- Pulled AAPL daily price data using yfinance
-- Calculated a 20day and 50day moving average
-- Built buy/sell signals based on when the two averages cross
-- Accounted for idle cash earning a risk-free rate while out of the market, rather than assuming 0%
-- Compared cumulative returns, CAGR, Sharpe ratio, and max drawdown between the strategy and buy and hold
-- Plotted price with both moving averages overlaid, and drawdown over time, to make the strategy's behavior visible rather than just summarized in numbers
+This project tests a simple trend-following strategy against AAPL stock data from 2019 to 2026, comparing it to just buying and holding the stock. The strategy generates a buy signal when a short-term moving average crosses above a long-term moving average, and a sell signal when it crosses below.
 
 ## Result
 
-Buy and hold clearly won here, both on raw returns and once you adjust for risk. The strategy did lose less during downturns, but not enough to make up for how much growth it missed out on. Kind of expected, since simple moving average strategies tend to get whipsawed out of the market and miss the sharp parts of a recovery, and that really adds up over a strong bull run like AAPL's had.
+| | CAGR | Max Drawdown | Sharpe |
+|---|---|---|---|
+| Buy & Hold | 31.06% | -33.36% | 0.94 |
+| Strategy | 18.81% | -28.36% | 0.78 |
 
-| | CAGR | Max Drawdown |
-|---|---|---|
-| Buy & Hold | ~32.7% | -33.4% |
-| Strategy | ~17.4% | -29.1% |
+Buy-and-hold outperformed the strategy on both raw and risk-adjusted returns. The strategy made 18 round-trip trades over the period, spending about 65% of the time in the market. Transaction costs accounted for roughly 1.8% of cumulative return — verified directly in the notebook by comparing results with and without costs — so the underperformance is mainly about missed time in the market during recoveries, not trading fees.
 
-(Sharpe ratios are in the notebook itself.)
+Numbers reflect a run against live yfinance data on [FILL IN THE DATE YOU ACTUALLY RAN IT]. Re-running later may produce slightly different results if the underlying price data or T-bill rate series is revised.
+
+## What I did
+
+- Pulled AAPL daily price data and the 13-week T-bill rate from yfinance
+- Calculated 20-day and 50-day moving averages and built buy/sell signals from their crossover
+- Used the actual historical T-bill rate for idle cash instead of assuming 0% or a flat guess
+- Charged a small transaction cost on every trade instead of assuming free trading
+- Refactored the backtest into reusable functions (`max_drawdown`, `cagr`, `sharpe`, `summarize`)
+- Added a sanity check comparing the implied cost drag against the expected drag from the trade count, to verify the transaction cost logic was actually correct rather than just trusting the output
 
 ## Assumptions and limitations
 
-- No transaction costs or slippage
-- Long/flat only, no short positions
+- Long/flat only — no short positions
 - Full capital committed on every trade, no partial position sizing
-- Single ticker (AAPL) and single parameter pair (20/50),  not yet tested for robustness across other stocks or window lengths
-- Cash return while out of the market is approximated at a flat rate, not the actual historical risk-free rate at each point in time
+- Fills happen at the closing price of the signal day, not the next day's open
+- Single ticker, single parameter pair (20/50) — a multi-asset, multi-parameter robustness check is a planned follow-up
+- Cash return while out of the market uses the actual historical T-bill rate where available, falling back to a flat 4% estimate if that data can't be pulled
+- Data is pulled live from yfinance rather than cached, so results may shift slightly on re-run
+
+## How to run
+
+1. Clone this repo
+2. Install dependencies: `pip install -r requirements.txt`
+3. Open `Backtesting_v1.ipynb` and run all cells — this pulls AAPL price data and T-bill rates live from yfinance
 
 ## Tools
 
 yfinance, pandas, NumPy, Matplotlib
 
-## Development notes
-
-Ran into a sneaky bug early on, yfinance returns price data with a weird multi-index column structure, and my derived columns (like the signal) didn't line up with it the same way. If I'd written the returns calculation as a simple one-liner instead of building it column by column, it would've silently returned all NaN values with zero error message. Fixed it by flattening the columns right after downloading the data. Also fixed how idle cash was treated — originally it just earned 0%, which isn't realistic since cash actually earns some return sitting in a money market or T-bill.
-
 ## What's next
 
-Right now this is one strategy, one stock, one set of parameters, not really enough to say anything solid. Next step is running the same strategy across a bunch of different tickers and parameter combinations to see if this result actually holds up, or if it's just specific to how AAPL happened to move during this exact stretch.
+This is one strategy, one stock, one parameter pair — not enough to draw a strong general conclusion. The next step is testing the same strategy across a broad set of tickers and parameter combinations to check whether this result holds up, or whether it's specific to AAPL's exact price path over this window. This is planned as a direct follow-up while the codebase is still fresh, not an open-ended someday item.
